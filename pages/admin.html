@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Clear Database</title>
+
+
+	<link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+	<div class="center">
+		<center>
+			<h1>Delete all API Links saved</h1>
+
+      <form action="/admin/cleardb" method="POST">
+			  <input type="text" placeholder="Admin Password" id="admincode">
+        <br>
+        <input type="submit" value="Submit">
+      </form>
+    </center>
+  </div>
+  <a href="/">Create a new link</a>
+  <script src="/static/script.js"></script>
+</body>
+</html>
