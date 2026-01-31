@@ -2,10 +2,12 @@ import os
 from flask import Flask, render_template, redirect, request
 app = Flask('app', static_folder="static", template_folder="pages")
 import random, string
-from replit import db
+#from replit import db
 
 
-admin_code = os.environ['admin_code']
+db = {}
+
+admin_code = "test"
 
 
 def create_short_id_name():
@@ -38,7 +40,7 @@ def render_page(id):
 def clear_db_url():
   return render_template('admin.html')
   
-  return render_template("index.html")
+  #return render_template("index.html")
 
 @app.route('/api/create')
 def api_create():
