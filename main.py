@@ -2,10 +2,34 @@ import os
 from flask import Flask, render_template, redirect, request
 app = Flask('app', static_folder="static", template_folder="pages")
 import random, string
-#from replit import db
+import sqlite3
 
 
-db = {}
+def sqlConnect():
+    c = sqlite3.cect('db.sqlite3')
+    c.row_factory = sqlite3.Row
+    return c
+
+def sqlInit():
+    with sqlConnect() as c:
+        c.execute('CREATE TABLE IF NOT EXISTS ushort_links (key TEXT PRIMARY KEY, value TEXT)')
+
+def sqlGet(key):
+    with sqlConnect() as c:
+        row = c.execute('SELECT value FROM ushort_links WHERE key = ?', (key,)).fetchone()
+        return row[0] if row else None
+
+def sqlSet(key, value):
+    with sqlConnect() as c:
+        c.execute('INSERT OR REPLACE INTO ushort_links (key, value) VALUES (?, ?)', (key, value))
+        c.commit()
+
+def sqlClear():
+    with sqlConnect() as c:
+        c.execute('DELETE FROM ushort_links')
+        c.commit()
+
+sqlInit()
 
 admin_code = "test"
 
@@ -32,28 +56,28 @@ def render_page(id):
     return render_template('index.html')
   else:
     try:
-      return redirect(db[id])
-    except KeyError:
+      return redirect(sqlGet(id))
+    except Exception as e:
+      print("Ran into an error: " + e)
       return render_template("page_not_found.html")
 
 @app.route('/cleardb')
 def clear_db_url():
   return render_template('admin.html')
-  
-  #return render_template("index.html")
+
 
 @app.route('/api/create')
 def api_create():
   id = create_short_id_name()
 
-  db[id] = request.args["long"]
+  sqlSet(id, request.args["long"])
 
   return redirect("/created?id="+id)
 
 @app.route('/admin/cleardb')
 def admin():
-  if request.args["admincode"] == admin_code:
-    db.clear()
+  if request.form.get("admincode") == admin_code:
+    sqlClear()
     return '', 200
 
 @app.errorhandler(400)
