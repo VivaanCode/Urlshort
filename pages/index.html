@@ -1,29 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
+{% block content %}
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <form action="/api/create">
+    <input type="text" placeholder="Enter a long url" id="long" name="long">
+    <br>
+    <input type="submit" value="Shorten">
+  </form>
 
-  <title>UShort</title>
-
-
-	<link rel="stylesheet" href="static/style.css">
-</head>
-
-<body>
-	<div class="center">
-		<center>
-			<h1>Shorten A Url!</h1>
-
-      <form action="/api/create">
-			  <input type="text" placeholder="Enter a long url" id="long" name="long">
-        <br>
-        <input type="submit" value="Submit">
-      </form>
-    </center>
-  </div>
-  <a href="/cleardb">Clear all links</a>
-  <script src="/static/script.js"></script>
-</body>
-</html>
+{% endblock %}

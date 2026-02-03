@@ -4,7 +4,6 @@ app = Flask('app', static_folder="static", template_folder="pages")
 import random, string
 import sqlite3
 
-
 def sqlConnect():
     c = sqlite3.connect('db.sqlite3')
     c.row_factory = sqlite3.Row
@@ -89,12 +88,10 @@ def api_create():
 
 @app.route('/admin/cleardb', methods=['POST'])
 def admin():
-  try:
-    if request.form.get("admincode") == admin_code:
-      sqlClear()
-      return '', 200
-  except Exception as e:
-    return render_template("incorrect_admin_code.html")
+  if request.form.get("admincode") == admin_code:
+    sqlClear()
+    return '', 200
+  return render_template("incorrect_admin_code.html")
 
 @app.errorhandler(400)
 def bad_request(code):
