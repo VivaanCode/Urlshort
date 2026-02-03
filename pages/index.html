@@ -1,10 +1,29 @@
-{% extends "layout.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
 
-  <form action="/api/create">
-    <input type="text" placeholder="Enter a long url" id="long" name="long">
-    <br>
-    <input type="submit" value="Shorten">
-  </form>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% endblock %}
+  <title>UShort</title>
+
+
+	<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+	<div class="center">
+		<center>
+    <h1>UShort</h1>
+
+    <form action="/api/create">
+      <input type="text" placeholder="Enter a long url" id="long" name="long">
+      <br>
+      <input type="submit" value="Shorten">
+    </form>
+    </center>
+  </div>
+  <a href="/">Create a new link</a><br>
+  <script src="/static/script.js"></script>
+</body>
+</html>

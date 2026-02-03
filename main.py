@@ -1,43 +1,52 @@
 import os
 from flask import Flask, render_template, redirect, request
 app = Flask('app', static_folder="static", template_folder="pages")
-import random, string
+import random, string, validators
 import sqlite3
 
 def sqlConnect():
     c = sqlite3.connect('db.sqlite3')
     c.row_factory = sqlite3.Row
-    print("connected to database")
-    print(c)
+    #print("connected to database")
+    #print(c)
     return c
 
 def sqlInit():
     with sqlConnect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS ushort_links (key TEXT PRIMARY KEY, value TEXT)')
-        print("created table successfully")
-        print(c)
+        #print("created table successfully")
+        #print(c)
 
 def sqlGet(key):
     with sqlConnect() as c:
         row = c.execute('SELECT value FROM ushort_links WHERE key = ?', (key,)).fetchone()
-        print("got row successfully")
-        print(c)
-        print(row)
+        #print("got row successfully")
+        #print(c)
+        #print(row)
         return row[0] if row else None
+
+def sqlGetOther(value):
+    with sqlConnect() as c:
+        row = c.execute('SELECT key FROM ushort_links WHERE value = ?', (value,)).fetchone()
+        #print("got row successfully")
+        #print(c)
+        print(row[0])
+        return row[0] if row else None
+
 
 def sqlSet(key, value):
     with sqlConnect() as c:
         c.execute('INSERT OR REPLACE INTO ushort_links (key, value) VALUES (?, ?)', (key, value))
         c.commit()
-        print("set row successfully")
-        print(c)
+        #print("set row successfully")
+        #print(c)
 
 def sqlClear():
     with sqlConnect() as c:
         c.execute('DELETE FROM ushort_links')
         c.commit()
-        print("cleared database")
-        print(c)
+        #print("cleared database")
+        #print(c)
 
 sqlInit()
 
@@ -70,7 +79,7 @@ def render_page(id):
     try:
       return redirect(sqlGet(id))
     except Exception as e:
-      print("Ran into an error: " + e)
+      print("Ran into an error: " + str(e))
       return render_template("page_not_found.html")
 
 @app.route('/cleardb')
@@ -80,17 +89,23 @@ def clear_db_url():
 
 @app.route('/api/create')
 def api_create():
-  id = create_short_id_name()
+  if not validators.url(request.args["long"]):
+    return render_template("invalid_url.html")
 
-  sqlSet(id, request.args["long"])
+  try:
+    if sqlGetOther(request.args["long"]):
+      return redirect("/created?id="+sqlGetOther(request.args["long"]))
+  except:
+    id = create_short_id_name()
+    sqlSet(id, request.args["long"])
 
-  return redirect("/created?id="+id)
+    return redirect("/created?id="+id)
 
 @app.route('/admin/cleardb', methods=['POST'])
 def admin():
   if request.form.get("admincode") == admin_code:
     sqlClear()
-    return '', 200
+    return render_template("reset_success.html"), 200
   return render_template("incorrect_admin_code.html")
 
 @app.errorhandler(400)
