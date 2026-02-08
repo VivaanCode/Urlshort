@@ -13,30 +13,42 @@ def sqlConnect():
 
 def sqlInit():
     with sqlConnect() as c:
-        c.execute('CREATE TABLE IF NOT EXISTS ushort_links (key TEXT PRIMARY KEY, value TEXT)')
+        c.execute('CREATE TABLE IF NOT EXISTS ushort_links (short TEXT PRIMARY KEY, long TEXT, clicks INTEGER DEFAULT 0)')
         #print("created table successfully")
         #print(c)
 
-def sqlGet(key):
+def sqlGet(short):
     with sqlConnect() as c:
-        row = c.execute('SELECT value FROM ushort_links WHERE key = ?', (key,)).fetchone()
+        row = c.execute('SELECT long FROM ushort_links WHERE short = ?', (short,)).fetchone()
         #print("got row successfully")
         #print(c)
         #print(row)
         return row[0] if row else None
 
-def sqlGetOther(value):
+def sqlGetOther(long):
     with sqlConnect() as c:
-        row = c.execute('SELECT key FROM ushort_links WHERE value = ?', (value,)).fetchone()
+        row = c.execute('SELECT short FROM ushort_links WHERE long = ?', (long,)).fetchone()
         #print("got row successfully")
         #print(c)
         print(row[0])
         return row[0] if row else None
 
+def sqlAddClick(short):
+     with sqlConnect() as c:
+        c.execute('UPDATE ushort_links SET clicks = clicks + 1 WHERE short = ?', (short,))
+        c.commit()
 
-def sqlSet(key, value):
+def sqlGetClicks(short):
     with sqlConnect() as c:
-        c.execute('INSERT OR REPLACE INTO ushort_links (key, value) VALUES (?, ?)', (key, value))
+        row = c.execute('SELECT clicks FROM ushort_links WHERE short = ?', (short,)).fetchone()
+        #print("got row successfully")
+        #print(c)
+        #print(row)
+        return row[0] if row else None
+
+def sqlSet(short, long):
+    with sqlConnect() as c:
+        c.execute('INSERT OR REPLACE INTO ushort_links (short, long) VALUES (?, ?)', (short, long))
         c.commit()
         #print("set row successfully")
         #print(c)
@@ -50,8 +62,8 @@ def sqlClear():
 
 sqlInit()
 
-#admin_code = os.getenv("ADMIN_CODE")
-admin_code = "test"
+admin_code = os.getenv("ADMIN_CODE")
+#admin_code = "test"
 
 
 
@@ -63,9 +75,9 @@ def create_short_id_name():
   
   return output
     
-@app.route('/created')
+@app.route('/info')
 def created_page():
-  return render_template("created.html", id=request.args["id"])
+  return render_template("created.html", id=request.args["id"], clicks=sqlGetClicks(request.args["id"]))
 
 
 @app.route('/', defaults={"id": None})
@@ -77,6 +89,7 @@ def render_page(id):
     return render_template('index.html')
   else:
     try:
+      sqlAddClick(id)
       return redirect(sqlGet(id))
     except Exception as e:
       print("Ran into an error: " + str(e))
@@ -94,12 +107,12 @@ def api_create():
 
   try:
     if sqlGetOther(request.args["long"]):
-      return redirect("/created?id="+sqlGetOther(request.args["long"]))
+      return redirect("/info?id="+sqlGetOther(request.args["long"]))
   except:
     id = create_short_id_name()
     sqlSet(id, request.args["long"])
 
-    return redirect("/created?id="+id)
+    return redirect("/info?id="+id)
 
 @app.route('/admin/cleardb', methods=['POST'])
 def admin():
