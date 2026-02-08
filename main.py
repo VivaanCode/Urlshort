@@ -2,68 +2,87 @@ import os
 from flask import Flask, render_template, redirect, request
 app = Flask('app', static_folder="static", template_folder="pages")
 import random, string, validators
-import sqlite3
+#import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+db_url = os.getenv("DATABASE_URL")
+#db_url = "postgresql://youcantseethis"
+#admin_code = os.getenv("ADMIN_CODE")
+admin_code = "test"
+
+
 
 def sqlConnect():
-    c = sqlite3.connect('db.sqlite3')
-    c.row_factory = sqlite3.Row
+    conn = psycopg2.connect(db_url) #sqlite3.connect('db.sqlite3')
+    #c.row_factory = sqlite3.Row
     #print("connected to database")
     #print(c)
-    return c
+    return conn
 
 def sqlInit():
-    with sqlConnect() as c:
-        c.execute('CREATE TABLE IF NOT EXISTS ushort_links (short TEXT PRIMARY KEY, long TEXT, clicks INTEGER DEFAULT 0)')
-        #print("created table successfully")
-        #print(c)
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('''CREATE TABLE IF NOT EXISTS ushort_links (
+                        short TEXT PRIMARY KEY, 
+                        long TEXT, 
+                        clicks INTEGER DEFAULT 0)''')
+      conn.commit()
 
 def sqlGet(short):
-    with sqlConnect() as c:
-        row = c.execute('SELECT long FROM ushort_links WHERE short = ?', (short,)).fetchone()
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('SELECT long FROM ushort_links WHERE short = %s', (short,))
+        row = c.fetchone()
+        #print("got row successfully")
+        #print(c)
+        #print(row)
+        return row.fetchone()[0] if row else None
+
+def sqlGetOther(long):
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('SELECT short FROM ushort_links WHERE long = %s', (long,))
+        row = c.fetchone()
         #print("got row successfully")
         #print(c)
         #print(row)
         return row[0] if row else None
 
-def sqlGetOther(long):
-    with sqlConnect() as c:
-        row = c.execute('SELECT short FROM ushort_links WHERE long = ?', (long,)).fetchone()
-        #print("got row successfully")
-        #print(c)
-        print(row[0])
-        return row[0] if row else None
-
 def sqlAddClick(short):
-     with sqlConnect() as c:
-        c.execute('UPDATE ushort_links SET clicks = clicks + 1 WHERE short = ?', (short,))
-        c.commit()
+     with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('UPDATE ushort_links SET clicks = clicks + 1 WHERE short = %s', (short,))
+      conn.commit()
 
 def sqlGetClicks(short):
-    with sqlConnect() as c:
-        row = c.execute('SELECT clicks FROM ushort_links WHERE short = ?', (short,)).fetchone()
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('SELECT clicks FROM ushort_links WHERE short = %s', (short,))
+        row = c.fetchone()
         #print("got row successfully")
         #print(c)
         #print(row)
         return row[0] if row else None
 
 def sqlSet(short, long):
-    with sqlConnect() as c:
-        c.execute('INSERT OR REPLACE INTO ushort_links (short, long) VALUES (?, ?)', (short, long))
-        c.commit()
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('''INSERT INTO ushort_links (short, long) VALUES (%s, %s) ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long''', (short, long))
+      conn.commit()
         #print("set row successfully")
         #print(c)
 
 def sqlClear():
-    with sqlConnect() as c:
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
         c.execute('DELETE FROM ushort_links')
-        c.commit()
+      conn.commit()
         #print("cleared database")
         #print(c)
 
 sqlInit()
 
-admin_code = os.getenv("ADMIN_CODE")
-#admin_code = "test"
 
 
 
