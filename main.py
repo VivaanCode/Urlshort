@@ -1,3 +1,4 @@
+from math import exp
 import os
 from flask import Flask, render_template, redirect, request
 app = Flask('app', static_folder="static", template_folder="pages")
@@ -7,9 +8,9 @@ import psycopg2
 from datetime import datetime, timedelta
 
 db_url = os.getenv("DATABASE_URL")
-#db_url = ""
+db_url = ""
 admin_code = os.getenv("ADMIN_CODE")
-#admin_code = "test"
+admin_code = "test"
 
 days_valid = 3
 
@@ -94,6 +95,13 @@ def sqlClear():
         #print("cleared database")
         #print(c)
 
+def sqlGetExpiry(short):
+  with sqlConnect() as conn:
+    with conn.cursor() as c:
+      c.execute('SELECT expiry FROM ushort_links WHERE short = %s', (short,))
+      row = c.fetchone()
+      return row[0] if row else None
+
 sqlInit()
 
 
@@ -111,9 +119,29 @@ def create_short_id_name():
     
 @app.route('/info')
 def created_page():
-  if not request.args.get("id"):
+  idArg = request.args["id"]
+
+  if not idArg:
     return render_template("page_not_found.html")
-  return render_template("created.html", id=request.args["id"], clicks=sqlGetClicks(request.args["id"]))
+
+  
+  expiry = sqlGetExpiry(idArg)
+
+  if expiry:
+    remaining = expiry - datetime.now()
+    days = remaining.days
+    hours = divmod(remaining.seconds, 3600)
+    minutes = divmod(hours, 60)
+
+  if days > 0:
+    timeLeft = f"{days}d {hours}h {minutes}m" 
+  elif hours > 0:
+    timeLeft = f"{hours}h {minutes}m"
+  else:
+    timeLeft = f"{minutes}m"
+
+
+  return render_template("created.html", id=idArg, clicks=sqlGetClicks(idArg), expiry=timeLeft)
 
 
 @app.route('/', defaults={"id": None})
@@ -143,13 +171,14 @@ def clear_db_url():
 @app.route('/api/create')
 def api_create():
   try:
-    if request.args.get("long") is not None:
+    if request.args.get("long") is None:
       return render_template("invalid_url.html")
   except:
     return render_template("invalid_url.html")
 
   if not validators.url(request.args.get("long")):
-    return render_template("invalid_url.html")
+    if not validators.url("https://"+request.args.get("long")):
+      return render_template("invalid_url.html")
 
   id = create_short_id_name()
   sqlSet(id, request.args["long"])
