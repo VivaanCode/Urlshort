@@ -172,6 +172,8 @@ def clear_db_url():
 
 @app.route('/api/create')
 def api_create():
+  long_url = request.args.get("long")
+  print(f"[api_create] long={long_url!r}")
   try:
     if request.args.get("long") is None:
       return render_template("invalid_url.html")
