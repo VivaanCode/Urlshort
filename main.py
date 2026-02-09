@@ -8,9 +8,9 @@ import psycopg2
 from datetime import datetime, timedelta
 
 db_url = os.getenv("DATABASE_URL")
-db_url = ""
+#db_url = ""
 admin_code = os.getenv("ADMIN_CODE")
-admin_code = "test"
+#admin_code = "test"
 
 days_valid = 3
 
