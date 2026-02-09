@@ -230,3 +230,102 @@ body > a:hover {
 body > a:active {
   transform: translateX(-50%) translateY(0);
 }
+
+/* ==========================================================================
+   Created / info page
+   ========================================================================== */
+
+.created-success h1 {
+  margin-bottom: 1.5rem;
+}
+
+.short-url-block {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.short-url-block label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.short-link {
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  word-break: break-all;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--duration-fast);
+}
+
+.short-link:hover {
+  color: var(--color-accent-hover);
+}
+
+.created-stats {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+.short-url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast), transform var(--duration-fast);
+  margin-left: 0.8em;
+}
+
+.copy-btn:hover {
+  background: var(--color-accent-hover);
+  transform: scale(1.02);
+}

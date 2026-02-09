@@ -1,8 +1,23 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1>Link Created!</h1>
-
-<h2>View at: </h2> <a href="/{{id}}">{{ request.host }}/{{id}}</a>
-<h2>View info on this page.</h2>
-<h2>Total clicks: {{clicks}}</h2>
+<div class="created-success">
+  <h1>Link Created!</h1>
+  
+  <div class="short-url-block">
+    <label>View at:</label>
+          <a href="/{{id}}" class="short-link" id="shortLink">{{ request.host }}/{{id}}</a>
+          <button type="button" class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('shortLink').href); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+   </div>
+  
+  <div class="created-stats">
+    <span class="stat">
+      <span class="stat-value">{{clicks}}</span>
+      <span class="stat-label">clicks</span>
+    </span>
+    <span class="stat">
+      <span class="stat-value">{{expiry}}</span>
+      <span class="stat-label">time left</span>
+    </span>
+  </div>
+</div>
 {% endblock %}
