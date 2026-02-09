@@ -1,11 +1,13 @@
 from math import exp
 import os
 from flask import Flask, render_template, redirect, request
-app = Flask('app', static_folder="static", template_folder="pages")
+
 import random, string, validators
 #import sqlite3
 import psycopg2
 from datetime import datetime, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 db_url = os.getenv("DATABASE_URL")
 #db_url = ""
@@ -13,6 +15,22 @@ admin_code = os.getenv("ADMIN_CODE")
 #admin_code = "test"
 
 days_valid = 3
+
+def get_ip():
+    return request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
+
+app = Flask('app', static_folder="static", template_folder="pages")
+limiter = Limiter(
+    key_func=get_ip(),
+    app=app,
+    default_limits=["1000 per day"],
+    storage_uri="memory://",
+)
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return render_template("rate_limit.html"), 429
 
 def sqlConnect():
     conn = psycopg2.connect(db_url) #sqlite3.connect('db.sqlite3')
@@ -148,6 +166,7 @@ def created_page():
 
 @app.route('/', defaults={"id": None})
 @app.route('/<id>')
+@limiter.limit("5 per minute", "50 per hour", "200 per day")
 def render_page(id):
   sqlDeleteOldLinks()
   if not id:
@@ -181,8 +200,11 @@ def api_create():
     return render_template("invalid_url.html")
 
   if not validators.url(request.args.get("long")):
-    if not validators.url("https://"+request.args.get("long")):
+    if validators.url("https://"+request.args.get("long")):
+      sqlSet(id, "https://"+request.args["long"])
+    else:
       return render_template("invalid_url.html")
+    
 
   id = create_short_id_name()
   sqlSet(id, request.args["long"])
