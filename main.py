@@ -166,7 +166,7 @@ def created_page():
 
 @app.route('/', defaults={"id": None})
 @app.route('/<id>')
-@limiter.limit("5 per minute", "50 per hour", "200 per day")
+@limiter.limit("5 per minute; 50 per hour; 200 per day")
 def render_page(id):
   sqlDeleteOldLinks()
   if not id:
