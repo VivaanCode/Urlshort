@@ -119,7 +119,7 @@ def create_short_id_name():
     
 @app.route('/info')
 def created_page():
-  idArg = request.args["id"]
+  idArg = request.args.get("id")
 
   if not idArg:
     return render_template("page_not_found.html")
@@ -130,18 +130,20 @@ def created_page():
   if expiry:
     remaining = expiry - datetime.now()
     days = remaining.days
-    hours = divmod(remaining.seconds, 3600)
-    minutes = divmod(hours, 60)
-
-  if days > 0:
-    timeLeft = f"{days}d {hours}h {minutes}m" 
-  elif hours > 0:
-    timeLeft = f"{hours}h {minutes}m"
-  else:
-    timeLeft = f"{minutes}m"
+    hours, remainder = divmod(remaining.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
 
 
-  return render_template("created.html", id=idArg, clicks=sqlGetClicks(idArg), expiry=timeLeft)
+    if days > 0:
+      timeLeft = f"{days}d {hours}h {minutes}m" 
+    elif hours > 0:
+      timeLeft = f"{hours}h {minutes}m"
+    else:
+      timeLeft = f"{minutes}m"
+
+
+    return render_template("created.html", id=idArg, clicks=sqlGetClicks(idArg), expiry=timeLeft)
+  return render_template("bad_request.html")
 
 
 @app.route('/', defaults={"id": None})
