@@ -21,7 +21,7 @@ def get_ip():
 
 app = Flask('app', static_folder="static", template_folder="pages")
 limiter = Limiter(
-    key_func=get_ip(),
+    key_func=get_ip,
     app=app,
     default_limits=["1000 per day"],
     storage_uri="memory://",
