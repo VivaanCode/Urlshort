@@ -4,14 +4,14 @@ app = Flask('app', static_folder="static", template_folder="pages")
 import random, string, validators
 #import sqlite3
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from datetime import datetime, timedelta
 
 db_url = os.getenv("DATABASE_URL")
-#db_url = "no"
-#admin_code = os.getenv("ADMIN_CODE")
-admin_code = "test"
+#db_url = ""
+admin_code = os.getenv("ADMIN_CODE")
+#admin_code = "test"
 
-
+days_valid = 3
 
 def sqlConnect():
     conn = psycopg2.connect(db_url) #sqlite3.connect('db.sqlite3')
@@ -26,7 +26,8 @@ def sqlInit():
         c.execute('''CREATE TABLE IF NOT EXISTS ushort_links (
                         short TEXT PRIMARY KEY, 
                         long TEXT, 
-                        clicks INTEGER DEFAULT 0)''')
+                        clicks INTEGER DEFAULT 0,
+                        expiry TIMESTAMP)''')
       conn.commit()
 
 def sqlGet(short):
@@ -66,11 +67,23 @@ def sqlGetClicks(short):
         return row[0] if row else None
 
 def sqlSet(short, long):
+    expiry = datetime.now() + timedelta(days=days_valid)
     with sqlConnect() as conn:
       with conn.cursor() as c:
-        c.execute('''INSERT INTO ushort_links (short, long) VALUES (%s, %s) ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long''', (short, long))
+        c.execute('''INSERT INTO ushort_links (short, long, expiry) 
+                         VALUES (%s, %s, %s)
+                         ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long,
+                         expiry = EXCLUDED.expiry''', (short, long, expiry))
       conn.commit()
         #print("set row successfully")
+        #print(c)
+
+def sqlDeleteOldLinks():
+    with sqlConnect() as conn:
+      with conn.cursor() as c:
+        c.execute('DELETE FROM ushort_links WHERE expiry < NOW();')
+      conn.commit()
+        #print("cleared database")
         #print(c)
 
 def sqlClear():
@@ -91,7 +104,9 @@ def create_short_id_name():
 
   for i in range(1, 6):
     output = output + random.choice(list(string.ascii_letters))
-  
+
+  if not sqlGet(output) is None:
+    return create_short_id_name()
   return output
     
 @app.route('/info')
@@ -104,6 +119,7 @@ def created_page():
 @app.route('/', defaults={"id": None})
 @app.route('/<id>')
 def render_page(id):
+  sqlDeleteOldLinks()
   if not id:
     id = request.args.get("id")
   if not id:
@@ -126,17 +142,19 @@ def clear_db_url():
 
 @app.route('/api/create')
 def api_create():
-  if not validators.url(request.args["long"]):
+  try:
+    if request.args.get("long") is not None:
+      return render_template("invalid_url.html")
+  except:
     return render_template("invalid_url.html")
 
-  try:
-    if sqlGetOther(request.args["long"]):
-      return redirect("/info?id="+sqlGetOther(request.args["long"]))
-  except:
-    id = create_short_id_name()
-    sqlSet(id, request.args["long"])
+  if not validators.url(request.args.get("long")):
+    return render_template("invalid_url.html")
 
-    return redirect("/info?id="+id)
+  id = create_short_id_name()
+  sqlSet(id, request.args["long"])
+
+  return redirect("/info?id="+id)
 
 @app.route('/admin/cleardb', methods=['POST'])
 def admin():
