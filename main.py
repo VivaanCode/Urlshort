@@ -7,7 +7,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 db_url = os.getenv("DATABASE_URL")
-#db_url = "postgresql://youcantseethis"
+#db_url = "no"
 #admin_code = os.getenv("ADMIN_CODE")
 admin_code = "test"
 
@@ -37,7 +37,7 @@ def sqlGet(short):
         #print("got row successfully")
         #print(c)
         #print(row)
-        return row.fetchone()[0] if row else None
+        return row[0] if row else None
 
 def sqlGetOther(long):
     with sqlConnect() as conn:
@@ -96,6 +96,8 @@ def create_short_id_name():
     
 @app.route('/info')
 def created_page():
+  if not request.args.get("id"):
+    return render_template("page_not_found.html")
   return render_template("created.html", id=request.args["id"], clicks=sqlGetClicks(request.args["id"]))
 
 
@@ -108,8 +110,11 @@ def render_page(id):
     return render_template('index.html')
   else:
     try:
+      shortId = sqlGet(id)
+      if shortId is None:
+        return render_template("page_not_found.html")
       sqlAddClick(id)
-      return redirect(sqlGet(id))
+      return redirect(shortId)
     except Exception as e:
       print("Ran into an error: " + str(e))
       return render_template("page_not_found.html")
