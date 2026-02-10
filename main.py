@@ -73,7 +73,7 @@ def sqlGetOther(long): # get short from long
         return row[0] if row else None
 
 def sqlAddClick(short):
-     with sqlConnect() as conn:
+    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('UPDATE ushort_links SET clicks = clicks + 1 WHERE short = %s', (short,))
       conn.commit()
@@ -85,8 +85,9 @@ def sqlGetClicks(short):
         row = c.fetchone()
         return row[0] if row else None
 
-def sqlSet(short, long, days_valid):
-    expiry = datetime.now() + timedelta(days=days_valid)
+def sqlSet(short, long, minutes_valid): # Says days_valid but is actually minutes valid because
+                                       # I am an extremely lazy programmer.
+    expiry = datetime.now() + timedelta(minutes=minutes_valid)
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('''INSERT INTO ushort_links (short, long, expiry) 
@@ -244,21 +245,22 @@ def api_create():
 
   id = create_short_id_name()
 
-  if int(request.args.get("days_valid")):
-    validDays = int(request.args.get("days_valid"))
+  if int(request.args.get("minutes_valid")):
+    validMinutes = int(request.args.get("minutes_valid"))
   else:
-    validDays = 3
+    validMinutes = 259200
 
-  if validDays > 3:
-    validDays = 3
+  if validMinutes > 259200:
+    validMinutes = 259200
 
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
-      sqlSet(id, "https://"+request.args["long"], validDays)
+      sqlSet(id, "https://"+request.args["long"], validMinutes)
+      return redirect("/info?id="+id)
     else:
       return render_template("invalid_url.html")
   
-  sqlSet(id, request.args["long"], validDays)
+  sqlSet(id, request.args["long"], validMinutes)
 
   return redirect("/info?id="+id)
 

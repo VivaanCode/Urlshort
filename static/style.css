@@ -73,6 +73,38 @@ title {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   animation: cardIn 0.6s var(--ease-out) both;
+
+  max-height: 70vh;    /* 1. Limits height to 80% of the screen */
+  overflow-y: auto;    /* 2. Adds vertical scroll only when content overflows */
+  overflow-x: hidden;  /* 3. Prevents accidental horizontal shifting */
+  /* Optional: Smooth scrolling for internal anchors */
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar for the .center card */
+.center::-webkit-scrollbar {
+  width: 8px; /* Slightly thinner for a modern look */
+}
+
+.center::-webkit-scrollbar-track {
+  background: var(--color-surface); /* Matches the card background */
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0; /* Rounds the track to match card corners */
+}
+
+.center::-webkit-scrollbar-thumb {
+  background: var(--color-border); /* Subtle, matches your input borders */
+  border-radius: 10px;
+  border: 2px solid var(--color-surface); /* Creates 'padding' around the thumb */
+}
+
+.center::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted); /* Highlights when hovering */
+}
+
+/* Firefox Support */
+.center {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-surface);
 }
 
 @keyframes cardIn {
