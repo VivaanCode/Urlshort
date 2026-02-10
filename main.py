@@ -217,6 +217,9 @@ def api_create():
   else:
     validDays = 3
 
+  if validDays>3:
+    validDays = 3
+
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
       sqlSet(id, "https://"+request.args["long"], validDays)
