@@ -5,7 +5,7 @@ import string
 import validators
 from math import exp
 from flask import Flask, render_template, redirect, request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask_limiter import Limiter
 from yarl import URL
 
@@ -87,7 +87,7 @@ def sqlGetClicks(short):
 
 def sqlSet(short, long, minutes_valid): # Says days_valid but is actually minutes valid because
                                        # I am an extremely lazy programmer.
-    expiry = datetime.now() + timedelta(minutes=minutes_valid)
+    expiry = datetime.now(timezone.utc) + timedelta(minutes=minutes_valid)
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('''INSERT INTO ushort_links (short, long, expiry) 
@@ -99,7 +99,7 @@ def sqlSet(short, long, minutes_valid): # Says days_valid but is actually minute
 def sqlDeleteOldLinks():
     with sqlConnect() as conn:
       with conn.cursor() as c:
-        c.execute('DELETE FROM ushort_links WHERE expiry < NOW();')
+        c.execute("DELETE FROM ushort_links WHERE expiry < CURRENT_TIMESTAMP AT TIME ZONE 'UTC';")
       conn.commit()
 
 def sqlClear():
@@ -135,14 +135,17 @@ def created_page():
   sqlDeleteOldLinks()
   idArg = request.args.get("id")
 
-  if not idArg:
+  if not sqlGet(idArg):
     return render_template("page_not_found.html")
 
   
   expiry = sqlGetExpiry(idArg)
 
   if expiry:
-    remaining = expiry - datetime.now()
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    
+    remaining = expiry - datetime.now(timezone.utc)
     days = remaining.days
     hours, remainder = divmod(remaining.seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -245,10 +248,12 @@ def api_create():
     return render_template("invalid_url.html")
 
   id = create_short_id_name()
-  print(request.args.get("minutes_valid"))
-  if int(request.args.get("minutes_valid")):
-    validMinutes = int(request.args.get("minutes_valid"))
-  else:
+  try:
+    if int(request.args.get("minutes_valid")):
+      validMinutes = int(request.args.get("minutes_valid"))
+    else:
+      validMinutes = 4320
+  except:
     validMinutes = 4320
 
   if validMinutes > 4320:
