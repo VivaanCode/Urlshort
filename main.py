@@ -203,6 +203,7 @@ def render_unshortener():
 
 @app.route('/unshortener')
 def unshorten():
+   print("hi")
 
    try:
     if request.args.get("short") is None:
@@ -211,11 +212,13 @@ def unshorten():
       return render_template("invalid_url.html")
 
    try:
-    thingUrl = request.host_url
-    print("thingURL: "+thingUrl)
+    idkWhatToCallThis = URL(request.args.get("short"))
+    print("idkwhat to call this: "+idkWhatToCallThis)
     shortParameter = request.args.get("short")
-    shortParameter.replace(thingUrl, "")
+    print("request arg: "+shortParameter)
+    shortParameter.replace(idkWhatToCallThis.origin, "")
     shortParameter.replace(" ", "")
+    print("short parameter: "+shortParameter)
     if sqlGet(shortParameter):
       return render_template("unshortened.html", link=sqlGet(shortParameter))
 
