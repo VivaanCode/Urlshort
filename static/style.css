@@ -202,12 +202,17 @@ input[type="submit"]:active {
 /* ==========================================================================
    Footer link (e.g. “Create a new link”, “Clear all links”)
    ========================================================================== */
-
-body > a {
+.footer-links {
   position: absolute;
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
+  display: flex; /* Makes them side-by-side */
+  gap: 1rem;     /* Space between the links */
+  white-space: nowrap;
+}
+
+.footer-links a {
   display: inline-block;
   padding: 0.5rem 1rem;
   color: var(--color-text-muted);
@@ -221,14 +226,14 @@ body > a {
     transform var(--duration-fast);
 }
 
-body > a:hover {
+.footer-links a:hover {
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.12);
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateY(-2px);
 }
 
-body > a:active {
-  transform: translateX(-50%) translateY(0);
+.footer-links a:active {
+  transform: translateY(0);
 }
 
 /* ==========================================================================
@@ -376,3 +381,10 @@ body > a:active {
     margin-bottom: 0.25rem;
     text-align: center;
   }
+
+
+
+
+a{
+  color: #6366f1;
+}

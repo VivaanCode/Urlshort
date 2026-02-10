@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Unshortener</h1>
+    <h2>Put in a UShort link here to see where it goes.</h2>
+
+    <form action="/unshortener">
+      <input type="text" placeholder="Enter a short url" id="short" name="short" required>
+      <br>
+    
+      <input type="submit" value="Unshorten">
+    </form>
+
+{% endblock %}

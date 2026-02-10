@@ -7,7 +7,8 @@ import random, string, validators
 import psycopg2
 from datetime import datetime, timedelta
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+#from flask_limiter.util import get_remote_address
+from yarl import URL
 
 db_url = os.getenv("DATABASE_URL")
 #db_url = ""
@@ -60,7 +61,7 @@ def sqlInit():
                         expiry TIMESTAMP)''')
       conn.commit()
 
-def sqlGet(short):
+def sqlGet(short): # get long from short
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('SELECT long FROM ushort_links WHERE short = %s', (short,))
@@ -70,7 +71,7 @@ def sqlGet(short):
         #print(row)
         return row[0] if row else None
 
-def sqlGetOther(long):
+def sqlGetOther(long): # get short from long
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('SELECT short FROM ushort_links WHERE long = %s', (long,))
@@ -194,6 +195,48 @@ def render_page(id):
       print("Ran into an error: " + str(e))
       return render_template("page_not_found.html")
 
+
+@app.route('/unshorten')
+def render_unshortener():
+  return render_template('unshorten.html')
+    
+
+@app.route('/unshortener')
+def unshorten():
+
+   try:
+    if request.args.get("short") is None:
+      return render_template("invalid_url.html")
+   except:
+      return render_template("invalid_url.html")
+
+   try:
+    thingUrl = request.host_url
+    print("thingURL: "+thingUrl)
+    shortParameter = request.args.get("short")
+    shortParameter.replace(thingUrl, "")
+    shortParameter.replace(" ", "")
+    if sqlGet(shortParameter):
+      return render_template("unshortened.html", link=sqlGet(shortParameter))
+
+      
+    if sqlGet(request.args.get("short")):
+      return render_template("unshortened.html", link=sqlGet(request.args.get("short")))
+    url = URL(request.args.get("short"))
+
+
+    if sqlGet(url.query.get('short')):
+      return render_template("unshortened.html", link=sqlGet(url.query.get('short')))
+    if sqlGet(url.query.get('id')):
+      return render_template("unshortened.html", link=sqlGet(url.query.get('id')))
+   except:
+      return render_template("invalid_url.html")
+  
+   return render_template("invalid_url.html")
+
+    
+
+
 @app.route('/cleardb')
 def clear_db_url():
   return render_template('admin.html')
@@ -202,8 +245,6 @@ def clear_db_url():
 @app.route('/api/create')
 @limiter.limit("10 per minute; 67 per hour; 200 per day")
 def api_create():
-  long_url = request.args.get("long")
-  print(f"[api_create] long={long_url!r}")
   try:
     if request.args.get("long") is None:
       return render_template("invalid_url.html")
