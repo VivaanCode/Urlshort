@@ -1,10 +1,19 @@
+import os
+import psycopg2
+import random
+import string
+import validators
 from math import exp
 from flask import Flask, render_template, redirect, request
-
-import random, string, validators, psycopg2, os
 from datetime import datetime, timedelta
 from flask_limiter import Limiter
 from yarl import URL
+
+try: 
+  from dotenv import load_dotenv
+  load_dotenv()
+except:
+  pass
 
 db_url = os.getenv("DATABASE_URL")
 admin_code = os.getenv("ADMIN_CODE")
@@ -173,6 +182,11 @@ def render_page(id):
 def render_unshortener():
   return render_template('unshorten.html')
     
+
+@app.route('/advanced')
+def render_advanced():
+  return render_template('advanced.html')
+
 
 @app.route('/unshortener')
 def unshorten():

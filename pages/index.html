@@ -15,18 +15,10 @@
 	<div class="center">
 		<center>
     <h1>UShort</h1>
-    <h2>Welcome to UShort! Install the bookmarklet now (drag and drop to bookmarks bar): <a href="javascript:(function(){const longUrl = encodeURIComponent(window.location.href); const apiUrl = `https://ushort.vivaan.dev/api/create?long=${longUrl}`; window.open(apiUrl, '_blank');})();">Shorten current link</a></h2>
+    <h2>You can now password protect your links! <a href="/advanced">Learn more</a></h2>
 
     <form action="/api/create">
       <input type="text" placeholder="Enter a long url" id="long" name="long" required>
-      <br>
-      
-      <label for="days_valid">Link expires in:</label>
-      <select id="days_valid" name="days_valid">
-        <option value="1">1 Day</option>
-        <option value="2">2 Days</option>
-        <option value="3" selected>3 Days</option>
-      </select>
       <br>
     
       <input type="submit" value="Shorten">
@@ -36,6 +28,7 @@
   <footer class="footer-links">
     <a href="//github.com/VivaanCode/Urlshort">View the Github</a>
     <a href="/unshorten">Unshorten a URL</a>
+    <a href="/advanced">Advanced</a>
   </footer>
   <script src="/static/script.js"></script>
 </body>
