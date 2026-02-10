@@ -212,12 +212,12 @@ def api_create():
 
   id = create_short_id_name()
 
-  if request.args.get("days_valid"):
-    validDays = request.args.get("days_valid")
+  if int(request.args.get("days_valid")):
+    validDays = int(request.args.get("days_valid"))
   else:
     validDays = 3
 
-  if validDays>3:
+  if validDays > 3:
     validDays = 3
 
   if not validators.url(request.args.get("long")):
