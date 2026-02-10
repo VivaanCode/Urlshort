@@ -16,12 +16,25 @@ admin_code = os.getenv("ADMIN_CODE")
 
 days_valid = 3
 
+
+# def get_ip():
+#     return request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
+
 def get_ip():
-    return request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
+    if request.headers.get("True-Client-IP"):
+        return request.headers.get("True-Client-IP")
+
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+
+    if x_forwarded_for:
+        ips = [ip.strip() for ip in x_forwarded_for.split(",")]
+        return ips[-2] if len(ips) >= 2 else ips[0] # return the 2nd last ip address in x-forwarded for (https://community.render.com/t/accessing-client-ips-in-a-node-express-app/36282)
+
+    return request.remote_addr
 
 app = Flask('app', static_folder="static", template_folder="pages")
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_ip,#get_remote_address,
     app=app,
     default_limits=["1000 per day"],
     storage_uri="memory://",
