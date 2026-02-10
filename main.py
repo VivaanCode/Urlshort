@@ -202,7 +202,7 @@ def clear_db_url():
 
 
 @app.route('/api/create')
-@limiter.limit("1 per day")
+@limiter.limit("10 per minute; 67 per hour; 200 per day")
 def api_create():
   long_url = request.args.get("long")
   print(f"[api_create] long={long_url!r}")
