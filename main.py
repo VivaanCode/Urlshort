@@ -249,10 +249,10 @@ def api_create():
   if int(request.args.get("minutes_valid")):
     validMinutes = int(request.args.get("minutes_valid"))
   else:
-    validMinutes = 259200
+    validMinutes = 4320
 
-  if validMinutes > 259200:
-    validMinutes = 259200
+  if validMinutes > 4320:
+    validMinutes = 4320
 
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
