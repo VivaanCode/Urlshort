@@ -132,6 +132,7 @@ def create_short_id_name():
     
 @app.route('/info')
 def created_page():
+  sqlDeleteOldLinks()
   idArg = request.args.get("id")
 
   if not idArg:
@@ -244,7 +245,7 @@ def api_create():
     return render_template("invalid_url.html")
 
   id = create_short_id_name()
-
+  print(request.args.get("minutes_valid"))
   if int(request.args.get("minutes_valid")):
     validMinutes = int(request.args.get("minutes_valid"))
   else:

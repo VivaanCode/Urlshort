@@ -405,7 +405,7 @@ input[type="submit"]:active {
   }
   
   /* Optional: Label styling to match your h2 muted look */
-  label[for="days_valid"] {
+  label[for="minutes_valid"] {
     display: block;
     font-size: 0.85rem;
     font-weight: 600;

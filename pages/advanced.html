@@ -15,20 +15,20 @@
 	<div class="center">
 		<center>
     <h1>UShort</h1>
-    <h2>Welcome to UShort! Install the bookmarklet now (drag and drop to bookmarks bar): <a href="javascript:(function(){const longUrl = encodeURIComponent(window.location.href); const apiUrl = `https://ushort.vivaan.dev/api/create?long=${longUrl}`; window.open(apiUrl, '_blank');})();">Shorten current link</a></h2>
+    <h2>On this page, you will find some advanced options for creating links.</h2>
 
     <form action="/api/create">
       <input type="text" placeholder="Enter a long url" id="long" name="long" required>
       <br>
       
-      <label for="days_valid">Link expires in:</label>
-      <select id="days_valid" name="days_valid">
-        <option value="0">Who knows</option>
-        <option value="6">6 Hours</option>
-        <option value="12">12 Hours</option>
-        <option value="24">1 Day</option>
-        <option value="48">2 Days</option>
-        <option value="72" selected>3 Days</option>
+      <label for="minutes_valid">Link expires in:</label>
+      <select id="minutes_valid" name="minutes_valid">
+        <option value="10">10 Minutes</option>
+        <option value="60">1 Hour</option>
+        <option value="720">12 Hours</option>
+        <option value="1440">1 Day</option>
+        <option value="2880">2 Days</option>
+        <option value="4320" selected>3 Days</option>
       </select>
       <br>
     
