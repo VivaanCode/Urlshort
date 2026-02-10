@@ -1,23 +1,14 @@
 from math import exp
-import os
 from flask import Flask, render_template, redirect, request
 
-import random, string, validators
-#import sqlite3
-import psycopg2
+import random, string, validators, psycopg2, os
 from datetime import datetime, timedelta
 from flask_limiter import Limiter
-#from flask_limiter.util import get_remote_address
 from yarl import URL
 
 db_url = os.getenv("DATABASE_URL")
-#db_url = ""
 admin_code = os.getenv("ADMIN_CODE")
-#admin_code = "test"
 
-
-# def get_ip():
-#     return request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
 
 def get_ip():
     if request.headers.get("True-Client-IP"):
@@ -33,7 +24,7 @@ def get_ip():
 
 app = Flask('app', static_folder="static", template_folder="pages")
 limiter = Limiter(
-    key_func=get_ip,#get_remote_address,
+    key_func=get_ip,
     app=app,
     default_limits=["1000 per day"],
     storage_uri="memory://",
@@ -45,10 +36,7 @@ def ratelimit_handler(e):
     return render_template("rate_limit.html"), 429
 
 def sqlConnect():
-    conn = psycopg2.connect(db_url) #sqlite3.connect('db.sqlite3')
-    #c.row_factory = sqlite3.Row
-    #print("connected to database")
-    #print(c)
+    conn = psycopg2.connect(db_url)
     return conn
 
 def sqlInit():
@@ -66,9 +54,6 @@ def sqlGet(short): # get long from short
       with conn.cursor() as c:
         c.execute('SELECT long FROM ushort_links WHERE short = %s', (short,))
         row = c.fetchone()
-        #print("got row successfully")
-        #print(c)
-        #print(row)
         return row[0] if row else None
 
 def sqlGetOther(long): # get short from long
@@ -76,9 +61,6 @@ def sqlGetOther(long): # get short from long
       with conn.cursor() as c:
         c.execute('SELECT short FROM ushort_links WHERE long = %s', (long,))
         row = c.fetchone()
-        #print("got row successfully")
-        #print(c)
-        #print(row)
         return row[0] if row else None
 
 def sqlAddClick(short):
@@ -92,9 +74,6 @@ def sqlGetClicks(short):
       with conn.cursor() as c:
         c.execute('SELECT clicks FROM ushort_links WHERE short = %s', (short,))
         row = c.fetchone()
-        #print("got row successfully")
-        #print(c)
-        #print(row)
         return row[0] if row else None
 
 def sqlSet(short, long, days_valid):
@@ -106,24 +85,18 @@ def sqlSet(short, long, days_valid):
                          ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long,
                          expiry = EXCLUDED.expiry''', (short, long, expiry))
       conn.commit()
-        #print("set row successfully")
-        #print(c)
 
 def sqlDeleteOldLinks():
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('DELETE FROM ushort_links WHERE expiry < NOW();')
       conn.commit()
-        #print("cleared database")
-        #print(c)
 
 def sqlClear():
     with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('DELETE FROM ushort_links')
       conn.commit()
-        #print("cleared database")
-        #print(c)
 
 def sqlGetExpiry(short):
   with sqlConnect() as conn:
@@ -212,13 +185,16 @@ def unshorten():
 
 
    try:
-    idkWhatToCallThis = URL(request.args.get("short"))
-    shortParameter = request.args.get("short")
-    whatToCallThisOrigin = str(idkWhatToCallThis.origin())
-    newParameter = shortParameter.replace(whatToCallThisOrigin+"/", "")
-    newParameterTwoPointOh = newParameter.replace(" ", "")
-    if sqlGet(newParameterTwoPointOh):
-      return render_template("unshortened.html", link=sqlGet(newParameterTwoPointOh))
+    ShortURLObject = URL(request.args.get("short"))
+    ShortURL = request.args.get("short")
+
+    ShortURLObjectOrigin = str(ShortURLObject.origin())
+
+    ShortURL = ShortURL.replace(ShortURLObjectOrigin+"/", "")
+    ShortURL = ShortURL.replace(" ", "")
+
+    if sqlGet(ShortURL):
+      return render_template("unshortened.html", link=sqlGet(ShortURL))
 
       
     if sqlGet(request.args.get("short")):
