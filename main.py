@@ -14,8 +14,6 @@ db_url = os.getenv("DATABASE_URL")
 admin_code = os.getenv("ADMIN_CODE")
 #admin_code = "test"
 
-days_valid = 3
-
 
 # def get_ip():
 #     return request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
@@ -98,7 +96,7 @@ def sqlGetClicks(short):
         #print(row)
         return row[0] if row else None
 
-def sqlSet(short, long):
+def sqlSet(short, long, days_valid):
     expiry = datetime.now() + timedelta(days=days_valid)
     with sqlConnect() as conn:
       with conn.cursor() as c:
@@ -212,15 +210,20 @@ def api_create():
   except:
     return render_template("invalid_url.html")
 
+  id = create_short_id_name()
+
+  if request.args.get("days_valid"):
+    validDays = request.args.get("days_valid")
+  else:
+    validDays = 3
+
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
-      sqlSet(id, "https://"+request.args["long"])
+      sqlSet(id, "https://"+request.args["long"], validDays)
     else:
       return render_template("invalid_url.html")
-    
-
-  id = create_short_id_name()
-  sqlSet(id, request.args["long"])
+  
+  sqlSet(id, request.args["long"], validDays)
 
   return redirect("/info?id="+id)
 
