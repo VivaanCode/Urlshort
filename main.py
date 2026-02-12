@@ -17,6 +17,8 @@ except:
 
 db_url = os.getenv("DATABASE_URL")
 admin_code = os.getenv("ADMIN_CODE")
+lastDBClear = None
+conn = None
 
 
 def get_ip():
@@ -44,42 +46,36 @@ limiter = Limiter(
 def ratelimit_handler(e):
     return render_template("rate_limit.html"), 429
 
-def sqlConnect():
-    conn = psycopg2.connect(db_url)
-    return conn
-
 def sqlInit():
-    with sqlConnect() as conn:
-      with conn.cursor() as c:
-        c.execute('''CREATE TABLE IF NOT EXISTS ushort_links (
-                        short TEXT PRIMARY KEY, 
-                        long TEXT, 
-                        clicks INTEGER DEFAULT 0,
-                        expiry TIMESTAMP)''')
-      conn.commit()
+    global conn
+    conn = psycopg2.connect(db_url)
+    
+    with conn.cursor() as c:
+      c.execute('''CREATE TABLE IF NOT EXISTS ushort_links (
+                      short TEXT PRIMARY KEY, 
+                      long TEXT, 
+                      clicks INTEGER DEFAULT 0,
+                      expiry TIMESTAMP)''')
+    conn.commit()
 
 def sqlGet(short): # get long from short
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('SELECT long FROM ushort_links WHERE short = %s', (short,))
         row = c.fetchone()
         return row[0] if row else None
 
 def sqlGetOther(long): # get short from long
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('SELECT short FROM ushort_links WHERE long = %s', (long,))
         row = c.fetchone()
         return row[0] if row else None
 
 def sqlAddClick(short):
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('UPDATE ushort_links SET clicks = clicks + 1 WHERE short = %s', (short,))
       conn.commit()
 
 def sqlGetClicks(short):
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('SELECT clicks FROM ushort_links WHERE short = %s', (short,))
         row = c.fetchone()
@@ -88,28 +84,24 @@ def sqlGetClicks(short):
 def sqlSet(short, long, minutes_valid): # Says days_valid but is actually minutes valid because
                                        # I am an extremely lazy programmer.
     expiry = datetime.now(timezone.utc) + timedelta(minutes=minutes_valid)
-    with sqlConnect() as conn:
-      with conn.cursor() as c:
-        c.execute('''INSERT INTO ushort_links (short, long, expiry) 
-                         VALUES (%s, %s, %s)
-                         ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long,
-                         expiry = EXCLUDED.expiry''', (short, long, expiry))
-      conn.commit()
+    with conn.cursor() as c:
+      c.execute('''INSERT INTO ushort_links (short, long, expiry) 
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long,
+                        expiry = EXCLUDED.expiry''', (short, long, expiry))
+    conn.commit()
 
 def sqlDeleteOldLinks():
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute("DELETE FROM ushort_links WHERE expiry < CURRENT_TIMESTAMP AT TIME ZONE 'UTC';")
       conn.commit()
 
 def sqlClear():
-    with sqlConnect() as conn:
       with conn.cursor() as c:
         c.execute('DELETE FROM ushort_links')
       conn.commit()
 
 def sqlGetExpiry(short):
-  with sqlConnect() as conn:
     with conn.cursor() as c:
       c.execute('SELECT expiry FROM ushort_links WHERE short = %s', (short,))
       row = c.fetchone()
@@ -132,11 +124,10 @@ def create_short_id_name():
     
 @app.route('/info')
 def created_page():
-  sqlDeleteOldLinks()
   idArg = request.args.get("id")
 
   if not sqlGet(idArg):
-    return render_template("page_not_found.html")
+    return render_template("page_not_found.html", 404)
 
   
   expiry = sqlGetExpiry(idArg)
@@ -158,6 +149,8 @@ def created_page():
     else:
       timeLeft = f"{minutes}m"
 
+    if seconds < 0:
+      return render_template("page_not_found.html", 404)
 
     return render_template("created.html", id=idArg, clicks=sqlGetClicks(idArg), expiry=timeLeft)
   return render_template("bad_request.html")
@@ -166,7 +159,6 @@ def created_page():
 @app.route('/', defaults={"id": None})
 @app.route('/<id>')
 def render_page(id):
-  sqlDeleteOldLinks()
   if not id:
     id = request.args.get("id")
   if not id:
@@ -276,6 +268,22 @@ def admin():
     sqlClear()
     return render_template("reset_success.html"), 200
   return render_template("incorrect_admin_code.html")
+
+@app.route('/ping')
+def clean_up_garbage():
+  global lastDBClear
+  now = datetime.now()
+
+  if lastDBClear is None:
+    sqlDeleteOldLinks()
+    lastDBClear = now
+    return "garbage was cleaned :)"
+  if now - lastDBClear >= timedelta(minutes=4.9):
+    sqlDeleteOldLinks()
+    lastDBClear = now
+    return "garbage was cleaned :)<br>case 2"
+  return "for whatever reason, couldn't clear garbage"
+
 
 @app.errorhandler(400)
 def bad_request(code):
