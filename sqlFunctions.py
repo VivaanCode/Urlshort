@@ -46,8 +46,7 @@ def sqlGetClicks(short):
         row = c.fetchone()
         return row[0] if row else None
 
-def sqlSet(short, long, minutes_valid): # Says days_valid but is actually minutes valid because
-                                       # I am an extremely lazy programmer.
+def sqlSet(short, long, minutes_valid):
     expiry = datetime.now(timezone.utc) + timedelta(minutes=minutes_valid)
     with conn.cursor() as c:
       c.execute('''INSERT INTO ushort_links (short, long, expiry) 
