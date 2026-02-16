@@ -66,7 +66,7 @@ title {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%;
-  max-width: 420px;
+  max-width: 520px;
   padding: 2.5rem 2rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -175,7 +175,7 @@ input {
   font-size: 1rem;
   display: block;
   width: 100%;
-  max-width: 280px;
+  max-width: 460px;
   margin: 0 auto 0.75rem;
   padding: 0.75rem 1rem;
   background: var(--color-bg);
@@ -201,6 +201,37 @@ input:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-glow);
   max-width: 100%;
+}
+
+.input-prefix {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto 0.75rem;
+}
+
+.input-prefix .prefix {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.input-prefix input {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-left: none;
 }
 
 input[type="submit"] {

@@ -1,3 +1,5 @@
+# Now avaliable at https://ushort.page !
+
 import os
 import random
 import string
@@ -20,6 +22,8 @@ db_url = os.getenv("DATABASE_URL")
 admin_code = os.getenv("ADMIN_CODE")
 lastDBClear = None
 conn = None
+
+banned_shorts = ["admin", "cleardb", "unshorten", "advanced", "info", "api", "ping"]
 
 
 def get_ip():
@@ -60,6 +64,8 @@ def create_short_id_name():
     output = output + random.choice(list(string.ascii_letters))
 
   if not sqlFunctions.sqlGet(output) is None:
+    if output in banned_shorts:
+      return create_short_id_name()
     return create_short_id_name()
   return output
     
@@ -178,8 +184,12 @@ def api_create():
       return render_template("invalid_url.html")
   except:
     return render_template("invalid_url.html")
-
-  id = create_short_id_name()
+  
+  if request.args.get("custom_path") is not None:
+    if sqlFunctions.sqlGet(request.args.get("custom_path")) is None and request.args.get("custom_path") not in banned_shorts:
+      id = request.args.get("custom_path")
+    else:
+      id = create_short_id_name()
   try:
     if int(request.args.get("minutes_valid")):
       validMinutes = int(request.args.get("minutes_valid"))

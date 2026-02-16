@@ -19,6 +19,11 @@
 
     <form action="/api/create">
       <input type="text" placeholder="Enter a long url" id="long" name="long" required>
+
+      <div class="input-prefix">
+        <span class="prefix">{{request.host}}/</span>
+        <input type="text" placeholder="Custom path (optional)" id="custom_path" name="custom_path">
+      </div>
       <br>
       
       <label for="minutes_valid">Link expires in:</label>
