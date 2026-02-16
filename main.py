@@ -2,10 +2,11 @@ import os
 import random
 import string
 import validators
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, jsonify
 from datetime import datetime, timedelta, timezone
 from flask_limiter import Limiter
 from yarl import URL
+import api
 
 import sqlFunctions
 
@@ -69,7 +70,6 @@ def created_page():
   if not sqlFunctions.sqlGet(idArg):
     return render_template("page_not_found.html", 404)
 
-  
   expiry = sqlFunctions.sqlGetExpiry(idArg)
 
   if expiry:
@@ -224,7 +224,6 @@ def clean_up_garbage():
     return "garbage was cleaned :)<br>case 2"
   return "for whatever reason, couldn't clear garbage"
 
-
 @app.errorhandler(400)
 def bad_request(code):
   return render_template("bad_request.html")
@@ -235,6 +234,81 @@ def internal_server_error(code):
 def page_not_found(code):
   return render_template("page_not_found.html")
 
+@app.route('/api/apicreate')  # how should i flask limiter rate limit this?
+def api_get():
+  auth = request.headers.get("Authorization")
+
+
+  if not auth:
+    return jsonify({"message": "Give an authorization header"}), 401
+
+  things = auth.split()
+  
+  if things[0].lower() != "bearer":
+    return jsonify({"message": "Authorization header has to start with Bearer"}), 401
+  elif len(things) == 1:
+    return jsonify({"message": "Authorization token not found"}), 401
+  elif len(things) > 2:
+    return jsonify({"message": "Authorization header has to be a Bearer token"}), 401
+  
+  ############################
+
+  try:
+    if request.args.get("long") is None:
+      return jsonify({"message": "Long url parameter is required"}), 400
+  except:
+    return jsonify({"message": "Invalid request parameters"}), 400
+
+  id = create_short_id_name()
+  try:
+    if int(request.args.get("minutes_valid")):
+      validMinutes = int(request.args.get("minutes_valid"))
+    else:
+      validMinutes = 4320
+  except:
+    validMinutes = 4320
+
+  if validMinutes > 4320:
+    validMinutes = 4320
+
+  if not validators.url(request.args.get("long")):
+    if validators.url("https://"+request.args.get("long")):
+      sqlFunctions.sqlSet(id, "https://"+request.args["long"], validMinutes)
+      return redirect("/info?id="+id)
+    else:
+      return jsonify({"message": "Provided invalid URL"}), 400
+  
+  return api.apiAdd(things[1], id, request.args["long"], validMinutes)
+
+
+@app.route('/api/getlink')  # how should i flask limiter rate limit this?
+def api_getlink():
+  auth = request.headers.get("Authorization")
+
+
+  if not auth:
+    return jsonify({"message": "Give an authorization header"}), 401
+
+  things = auth.split()
+  
+  if things[0].lower() != "bearer":
+    return jsonify({"message": "Authorization header has to start with Bearer"}), 401
+  elif len(things) == 1:
+    return jsonify({"message": "Authorization token not found"}), 401
+  elif len(things) > 2:
+    return jsonify({"message": "Authorization header has to be a Bearer token"}), 401
+  
+  ############################
+
+  try:
+    if request.args.get("short") is None:
+      return jsonify({"message": "Short url parameter is required"}), 400
+  except:
+    return jsonify({"message": "Invalid request parameters"}), 400
+  
+  return api.apiGet(things[1], request.args.get("short"))
+  
+  
 
 
 if __name__ == '__main__':

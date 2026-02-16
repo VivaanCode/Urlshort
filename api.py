@@ -81,5 +81,4 @@ def apiGet(api_key, short):
   if long:
     sqlFunctions.sqlAddClick(short)
     return {"success": True, "long": long}
-  else:
-    return {"success": False, "error": "Short URL not found"}
+  return {"success": False, "error": "Short URL not found"}
