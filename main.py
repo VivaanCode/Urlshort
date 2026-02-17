@@ -152,6 +152,13 @@ def unshorten():
    except:
       return render_template("invalid_url.html")
 
+   password_hash = sqlFunctions.sqlGetHashedPassword(id)
+   if password_hash:
+      given_password = request.args.get("password")
+      if given_password is None:
+        return render_template("unshorten_password.html", id=id)
+      if not bcrypt.checkpw(given_password.encode('utf-8'), password_hash.encode('utf-8')):
+        return render_template("incorrect_password.html", id=id)
 
    try:
     ShortURLObject = URL(request.args.get("short"))
