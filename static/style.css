@@ -451,3 +451,18 @@ input[type="submit"]:active {
 a{
   color: #6366f1;
 }
+
+
+.copy-feedback {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.short-url-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

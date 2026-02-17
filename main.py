@@ -202,6 +202,9 @@ def api_create():
       id = request.args.get("custom_path")
     else:
       id = create_short_id_name()
+  else:
+    id = create_short_id_name()
+
   try:
     if int(request.args.get("minutes_valid")):
       validMinutes = int(request.args.get("minutes_valid"))
@@ -341,7 +344,6 @@ def api_getlink():
   return api.apiGet(things[1], request.args.get("short"))
   
   
-PORT = int(os.getenv("PORT", 8080))
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=PORT)
+  PORT = int(os.getenv("PORT", 8080))
+  app.run(host='0.0.0.0', port=PORT)

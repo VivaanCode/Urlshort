@@ -5,8 +5,11 @@
   
   <div class="short-url-block">
     <label>View at:</label>
-          <a href="/{{id}}" class="short-link" id="shortLink">{{ request.host }}/{{id}}</a>
-          <button type="button" class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('shortLink').href); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+    <div class="short-url-row">
+      <a href="/{{id}}" class="short-link" id="shortLink">{{ request.host }}/{{id}}</a>
+      <button type="button" class="copy-btn" data-copy-target="#shortLink">Copy</button>
+    </div>
+    <div class="copy-feedback" aria-live="polite"></div>
    </div>
   
   <div class="created-stats">
@@ -20,4 +23,22 @@
     </span>
   </div>
 </div>
+<script>
+  document.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("copy-btn")) {
+      const target = document.querySelector(e.target.dataset.copyTarget);
+      const text = target.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        const feedback = e.target.parentElement.querySelector(".copy-feedback");
+        feedback.textContent = "Copied!";
+        setTimeout(() => {
+          feedback.textContent = "";
+        }, 2000);
+      } catch (err) {
+        console.error("Failed to copy text: ", err);
+      }
+    }
+  });
+</script>
 {% endblock %}
