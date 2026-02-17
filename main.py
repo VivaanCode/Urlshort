@@ -61,7 +61,7 @@ api.apiInit()
 
 
 def create_short_id_name():
-  output = '_'
+  output = ''
 
   for i in range(1, 6):
     output = output + random.choice(list(string.ascii_letters))
@@ -152,14 +152,6 @@ def unshorten():
    except:
       return render_template("invalid_url.html")
 
-   password_hash = sqlFunctions.sqlGetHashedPassword(id)
-   if password_hash:
-      given_password = request.args.get("password")
-      if given_password is None:
-        return render_template("unshorten_password.html", id=id)
-      if not bcrypt.checkpw(given_password.encode('utf-8'), password_hash.encode('utf-8')):
-        return render_template("incorrect_password.html", id=id)
-
    try:
     ShortURLObject = URL(request.args.get("short"))
     ShortURL = request.args.get("short")
@@ -169,23 +161,35 @@ def unshorten():
     ShortURL = ShortURL.replace(ShortURLObjectOrigin+"/", "")
     ShortURL = ShortURL.replace(" ", "")
 
+    shortcode = None
     if sqlFunctions.sqlGet(ShortURL):
-      return render_template("unshortened.html", link=sqlFunctions.sqlGet(ShortURL))
+      shortcode = ShortURL
+    elif sqlFunctions.sqlGet(request.args.get("short")):
+      shortcode = request.args.get("short")
+    else:
+      url = URL(request.args.get("short"))
+      if sqlFunctions.sqlGet(url.query.get('short')):
+        shortcode = url.query.get('short')
+      elif sqlFunctions.sqlGet(url.query.get('id')):
+        shortcode = url.query.get('id')
 
-      
-    if sqlFunctions.sqlGet(request.args.get("short")):
-      return render_template("unshortened.html", link=sqlFunctions.sqlGet(request.args.get("short")))
-    url = URL(request.args.get("short"))
+    if not shortcode:
+      return render_template("invalid_url.html")
 
+    # Now check password protection
+    password_hash = sqlFunctions.sqlGetHashedPassword(shortcode)
+    if password_hash:
+      given_password = request.args.get("password")
+      if given_password is None:
+        return render_template("unshorten_password.html", id=shortcode)
+      if not bcrypt.checkpw(given_password.encode('utf-8'), password_hash.encode('utf-8')):
+        return render_template("unshorten_incorrect.html", id=shortcode)
 
-    if sqlFunctions.sqlGet(url.query.get('short')):
-      return render_template("unshortened.html", link=sqlFunctions.sqlGet(url.query.get('short')))
-    if sqlFunctions.sqlGet(url.query.get('id')):
-      return render_template("unshortened.html", link=sqlFunctions.sqlGet(url.query.get('id')))
+    return render_template("unshortened.html", link=sqlFunctions.sqlGet(shortcode))
+
    except Exception as e:
       print(e)
       return render_template("invalid_url.html")
-   return render_template("invalid_url.html")
 
     
 
