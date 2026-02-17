@@ -4,3 +4,4 @@ psycopg2-binary
 validators
 Flask-Limiter
 yarl
+bcrypt

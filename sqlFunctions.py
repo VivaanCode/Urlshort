@@ -20,8 +20,15 @@ def sqlInit():
                       short TEXT PRIMARY KEY, 
                       long TEXT, 
                       clicks INTEGER DEFAULT 0,
-                      expiry TIMESTAMP)''')
+                      expiry TIMESTAMP,
+                      password_hash TEXT)''')
     conn.commit()
+
+def sqlGetHashedPassword(short):
+      with conn.cursor() as c:
+        c.execute('SELECT password_hash FROM ushort_links WHERE short = %s', (short,))
+        row = c.fetchone()
+        return row[0] if row else None
 
 def sqlGet(short): # get long from short
       with conn.cursor() as c:
@@ -46,13 +53,14 @@ def sqlGetClicks(short):
         row = c.fetchone()
         return row[0] if row else None
 
-def sqlSet(short, long, minutes_valid):
+def sqlSet(short, long, minutes_valid, password_hash=None):
     expiry = datetime.now(timezone.utc) + timedelta(minutes=minutes_valid)
     with conn.cursor() as c:
-      c.execute('''INSERT INTO ushort_links (short, long, expiry) 
-                        VALUES (%s, %s, %s)
+      c.execute('''INSERT INTO ushort_links (short, long, expiry, password_hash) 
+                        VALUES (%s, %s, %s, %s)
                         ON CONFLICT (short) DO UPDATE SET long = EXCLUDED.long,
-                        expiry = EXCLUDED.expiry''', (short, long, expiry))
+                        expiry = EXCLUDED.expiry, 
+                        password_hash = EXCLUDED.password_hash''', (short, long, expiry, password_hash))
     conn.commit()
 
 def sqlDeleteOldLinks():

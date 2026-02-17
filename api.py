@@ -3,21 +3,11 @@ from datetime import timezone
 import psycopg2, os
 import sqlFunctions
 
-sqlFunctions.sqlInit()
-
-try: 
-  from dotenv import load_dotenv
-  load_dotenv()
-except:
-  pass
-
-db_url = os.getenv("DATABASE_URL")
-
-# helper methods (functions?)
+conn = None
 
 def apiInit():
   global conn
-  conn = psycopg2.connect(db_url)
+  conn = psycopg2.connect(os.getenv("DATABASE_URL"))
   
   with conn.cursor() as c:
     c.execute('''CREATE TABLE IF NOT EXISTS ushort_api_keys (
@@ -34,7 +24,7 @@ def apiKeyExists(api_key):
 
 def getApiKeyInfo(api_key):
   with conn.cursor() as c:
-    c.execute("SELECT quota_day, expiry FROM ushort_api_keys WHERE api_key = %s", (api_key,))
+    c.execute("SELECT today_uses, quota_day, expiry FROM ushort_api_keys WHERE api_key = %s", (api_key,))
     return c.fetchone()
 
 def addApiUses(api_key):
@@ -45,21 +35,24 @@ def addApiUses(api_key):
 
 # actual api functions
 
-def apiAdd(api_key, short, long, minutes_valid):
+def apiAdd(api_key, short, long, minutes_valid, password_hash=None):
   if not apiKeyExists(api_key):
     return {"success": False, "error": "Invalid API key"}
   
   addApiUses(api_key)
 
-  today_uses, quota_day, expiry = getApiKeyInfo(api_key)
+  info = getApiKeyInfo(api_key)
+  if not info:
+    return {"success": False, "error": "API key not found"}
+  today_uses, quota_day, expiry = info  
 
-  if expiry < datetime.now(timezone.utc):
+  if expiry < datetime.datetime.now(timezone.utc):
     return {"success": False, "error": "API key expired"}
 
   if today_uses >= quota_day:
     return {"success": False, "error": "Daily quota exceeded"}
 
-  sqlFunctions.sqlSet(short, long, minutes_valid)
+  sqlFunctions.sqlSet(short, long, minutes_valid, password_hash)
 
   with conn.cursor() as c:
     c.execute("UPDATE ushort_api_keys SET quota_day = quota_day + 1 WHERE api_key = %s", (api_key,))
@@ -72,9 +65,12 @@ def apiGet(api_key, short):
     return {"success": False, "error": "Invalid API key"}
 
   addApiUses(api_key)
-  today_uses, quota_day, expiry = getApiKeyInfo(api_key)
+  info = getApiKeyInfo(api_key)
+  if not info:
+    return {"success": False, "error": "API key not found"}
+  today_uses, quota_day, expiry = info
 
-  if expiry < datetime.now(timezone.utc):
+  if expiry < datetime.datetime.now(timezone.utc):
     return {"success": False, "error": "API key expired"}
 
   long = sqlFunctions.sqlGet(short)

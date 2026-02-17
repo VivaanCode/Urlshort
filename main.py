@@ -8,6 +8,9 @@ from flask import Flask, render_template, redirect, request, jsonify
 from datetime import datetime, timedelta, timezone
 from flask_limiter import Limiter
 from yarl import URL
+import bcrypt
+
+
 import api
 
 import sqlFunctions
@@ -53,7 +56,7 @@ def ratelimit_handler(e):
 
 
 sqlFunctions.sqlInit()
-
+api.apiInit()
 
 
 
@@ -114,6 +117,15 @@ def render_page(id):
       shortId = sqlFunctions.sqlGet(id)
       if shortId is None:
         return render_template("page_not_found.html")
+      
+      password_hash = sqlFunctions.sqlGetHashedPassword(id)
+      if password_hash:
+        given_password = request.args.get("password")
+        if given_password is None:
+          return render_template("password_required.html", id=id)
+        if not bcrypt.checkpw(given_password.encode('utf-8'), password_hash.encode('utf-8')):
+          return render_template("incorrect_password.html", id=id)
+
       sqlFunctions.sqlAddClick(id)
       return redirect(shortId)
     except Exception as e:
@@ -201,14 +213,19 @@ def api_create():
   if validMinutes > 4320:
     validMinutes = 4320
 
+  password = request.args.get("password")
+  password_hash = None
+  if password:
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
-      sqlFunctions.sqlSet(id, "https://"+request.args["long"], validMinutes)
+      sqlFunctions.sqlSet(id, "https://"+request.args["long"], validMinutes, password_hash)
       return redirect("/info?id="+id)
     else:
       return render_template("invalid_url.html")
   
-  sqlFunctions.sqlSet(id, request.args["long"], validMinutes)
+  sqlFunctions.sqlSet(id, request.args["long"], validMinutes, password_hash)
 
   return redirect("/info?id="+id)
 
@@ -281,14 +298,19 @@ def api_get():
   if validMinutes > 4320:
     validMinutes = 4320
 
+  password = request.args.get("password")
+  password_hash = None
+  if password:
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
   if not validators.url(request.args.get("long")):
     if validators.url("https://"+request.args.get("long")):
-      sqlFunctions.sqlSet(id, "https://"+request.args["long"], validMinutes)
+      sqlFunctions.sqlSet(id, "https://"+request.args["long"], validMinutes, password_hash)
       return redirect("/info?id="+id)
     else:
       return jsonify({"message": "Provided invalid URL"}), 400
   
-  return api.apiAdd(things[1], id, request.args["long"], validMinutes)
+  return api.apiAdd(things[1], id, request.args["long"], validMinutes, password_hash)
 
 
 @app.route('/api/getlink')  # how should i flask limiter rate limit this?
