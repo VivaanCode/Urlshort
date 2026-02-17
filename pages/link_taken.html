@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>UShort</title>
+
+
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+	<div class="center">
+		<center>
+    <h1>UShort</h1>
+    <h2>That short link is already taken! Try creating a different one.</h2>
+
+    <form action="{{ url_for('api_create') }}">
+      <input type="text" placeholder="Enter a long url" id="long" name="long" required>
+
+      <div class="input-prefix">
+        <span class="prefix">{{request.host}}/</span>
+        <input type="text" placeholder="Custom path (optional)" id="custom_path" name="custom_path">
+      </div>
+      <br>
+      
+      <label for="minutes_valid">Link expires in:</label>
+      <select id="minutes_valid" name="minutes_valid">
+        <option value="10">10 Minutes</option>
+        <option value="60">1 Hour</option>
+        <option value="720">12 Hours</option>
+        <option value="1440">1 Day</option>
+        <option value="2880">2 Days</option>
+        <option value="4320" selected>3 Days</option>
+      </select>
+      <input type="password" placeholder="Enter a password (optional)" id="password" name="password"><br>
+      <input type="submit" value="Shorten">
+    </form>
+    </center>
+  </div>
+  <footer class="footer-links">
+    <a href="/">Home</a>
+  </footer>
+  <script src="/static/script.js"></script>
+</body>
+</html>
